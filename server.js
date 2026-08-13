@@ -3,8 +3,15 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 
+const connectDB = require('./src/config/db');
+const setupSwagger = require('./src/config/swagger');
+const authRoutes = require('./src/routes/authRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 5001;
+
+// Connect to MongoDB
+connectDB();
 
 // Global Middleware
 app.use(cors({
@@ -14,6 +21,12 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Setup Swagger API Documentation
+setupSwagger(app);
+
+// Routes
+app.use('/auth', authRoutes);
 
 // Base Route / Health Check
 app.get('/', (req, res) => {

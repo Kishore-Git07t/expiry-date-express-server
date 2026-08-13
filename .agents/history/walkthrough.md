@@ -1,39 +1,44 @@
-# Walkthrough - Express Server & Folder Structure Setup
+# Walkthrough - Implementing Auth APIs (Login & Register)
 
-Created the project folder structure matching `instructions.md`, installed necessary dependencies, and set up a bare minimum Express server in `server.js` running on port `5001`.
+Implemented authentication REST APIs (`POST /auth/register` and `POST /auth/login`), User collection schema in MongoDB, Controller-Service-DAO layer separation, request validation, JWT token/cookie authentication, and Swagger OpenAPI documentation at `/api-docs`.
 
 ## Changes Made
 
-### Configuration & Root Files
-- **[`package.json`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/package.json)**: Added dependencies (`express`, `cors`, `cookie-parser`, `dotenv`, `mongoose`, `jsonwebtoken`, `bcryptjs`, `express-validator`), dev dependency (`nodemon`), and npm scripts (`"start": "node server.js"`, `"dev": "nodemon server.js"`).
-- **[`.env`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/.env)**: Defined environment variables including `PORT=5001`, `MONGO_URI`, and `JWT_SECRET`.
-- **[`server.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/server.js)**: Implemented bare minimum Express server listening on port `5001` with `cors`, `cookie-parser`, JSON parsing middleware, and a health check route (`GET /`).
+### 1. Database Configuration & Models
+- **[`src/config/db.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/config/db.js)**: Configured MongoDB connection function `connectDB` using Mongoose.
+- **[`src/models/User.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/models/User.js)**: Created Mongoose `User` schema containing:
+  - `name` (String, required)
+  - `email` (String, required, unique, lowercase, trimmed)
+  - `password` (String, required - hashed with bcrypt)
+  - `timestamps` (createdAt, updatedAt)
 
-### Folder Structure
-Created the following standard directory structure under `src/`:
-- `src/config/`
-- `src/controllers/`
-- `src/models/`
-- `src/routes/`
-- `src/services/`
-- `src/utils/`
-- `src/dao/`
+### 2. DAO, Services, and Validators
+- **[`src/dao/userDao.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/dao/userDao.js)**: Database access methods (`findByEmail`, `createUser`, `findById`).
+- **[`src/services/authService.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/services/authService.js)**: Business logic for:
+  - `registerUser`: checks duplicate email, hashes password using `bcrypt.hash`, creates user via `userDao`, signs JWT token.
+  - `loginUser`: verifies user existence, compares hashed password using `bcrypt.compare`, signs JWT token.
+- **[`src/utils/validators.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/utils/validators.js)**: Input validation rules using `express-validator` for register and login requests.
+
+### 3. Controllers & Routes
+- **[`src/controllers/authController.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/controllers/authController.js)**: Controller functions for `register` (HTTP 201) and `login` (HTTP 200), setting `jwtToken` HTTP-only cookie and returning JSON responses.
+- **[`src/routes/authRoutes.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/routes/authRoutes.js)**: Express router mapping `POST /register` and `POST /login` with Swagger JSDoc annotations.
+
+### 4. Swagger API Documentation & Server Integration
+- **[`src/config/swagger.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/src/config/swagger.js)**: Configured `swagger-jsdoc` and `swagger-ui-express` under `/api-docs`.
+- **[`server.js`](file:///c:/Users/Happy/expiry-date-manager/expiry-date-express-server/server.js)**: Mounted `connectDB()`, `setupSwagger(app)`, and `/auth` routes.
 
 ---
 
 ## Verification Results
 
-### 1. Package Installation
-Successfully ran `npm install` with 0 security vulnerabilities found.
+### 1. Swagger UI Test
+- Endpoint `GET http://localhost:5001/api-docs/` -> **HTTP 200 OK**.
 
-### 2. Server Startup & Health Check
-- Started `server.js` on port `5001`.
-- Verified server log: `Server is running on port 5001`.
-- Sent GET request to `http://localhost:5001/`:
-```json
-{
-  "status": "success",
-  "message": "Expiry Date Manager Express Server is up and running!",
-  "port": 5001
-}
-```
+### 2. Input Validation Test
+- `POST http://localhost:5001/auth/register` with empty body -> **HTTP 400 Bad Request** with validation error messages:
+  - `"Name is required"`
+  - `"Please provide a valid email address"`
+  - `"Password must be at least 6 characters long"`
+
+### 3. Auth Endpoints Verification
+- `POST /auth/register` & `POST /auth/login` paths mounted correctly under `/auth`.
