@@ -64,7 +64,27 @@ const authController = {
                 message: error.message || 'Invalid email or password'
             });
         }
+    },
+
+    logout: async (request, response) => {
+        try {
+            response.clearCookie('jwtToken', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax',
+                path: '/'
+            });
+
+            return response.status(200).json({
+                message: 'User logged out successfully'
+            });
+        } catch (error) {
+            return response.status(500).json({
+                message: 'Error logging out user'
+            });
+        }
     }
 };
 
 module.exports = authController;
+
