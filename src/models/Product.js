@@ -4,13 +4,17 @@ const productSchema = new mongoose.Schema({
     userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
-        index: true
+        required: true
     },
     name: {
         type: String,
         required: [true, 'Product name is required'],
         trim: true
+    },
+    upcCode: {
+        type: String,
+        trim: true,
+        default: ''
     },
     brand: {
         type: String,
@@ -39,5 +43,14 @@ const productSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
+
+// Compound index: powers paginated dashboard queries (sorted by expiryDate per user)
+productSchema.index({ userId: 1, expiryDate: 1 });
+
+// Text index: powers search by product name
+productSchema.index({ name: 'text' });
+
+// Sparse index: powers UPC code lookups (only indexes docs that have a upcCode)
+productSchema.index({ userId: 1, upcCode: 1 }, { sparse: true });
 
 module.exports = mongoose.model('Product', productSchema);
