@@ -3,8 +3,11 @@ const authService = require('../services/authService');
 
 const authController = {
     register: async (request, response) => {
+        console.log('[REGISTER] Registration endpoint reached');
+
         const errors = validationResult(request);
         if (!errors.isEmpty()) {
+            console.log('[REGISTER] Validation failed:', JSON.stringify(errors.array()));
             return response.status(400).json({
                 errors: errors.array()
             });
@@ -12,7 +15,10 @@ const authController = {
 
         try {
             const { name, email, password } = request.body;
+            console.log(`[REGISTER] Attempting registration for email: ${email}`);
+
             const { user, token } = await authService.registerUser({ name, email, password });
+            console.log(`[REGISTER] User registered successfully: ${user.email}`);
 
             response.cookie('jwtToken', token, {
                 httpOnly: true,
@@ -27,6 +33,7 @@ const authController = {
                 token
             });
         } catch (error) {
+            console.error(`[REGISTER] Registration failed: ${error.message}`);
             const statusCode = error.statusCode || 500;
             return response.status(statusCode).json({
                 message: error.message || 'Internal server error'

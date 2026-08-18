@@ -14,14 +14,26 @@ const PORT = process.env.PORT || 5001;
 // Connect to MongoDB
 connectDB();
 
+// Build allowed origins from environment variables
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    process.env.FRONTEND_URL,
+].filter(Boolean);
+
 // Global Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || true,
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
     credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Diagnostic request logging for auth routes
+app.use('/auth', (req, res, next) => {
+    console.log(`[AUTH] ${req.method} ${req.originalUrl} from origin: ${req.headers.origin || 'N/A'}`);
+    next();
+});
 
 // Setup Swagger API Documentation
 setupSwagger(app);
